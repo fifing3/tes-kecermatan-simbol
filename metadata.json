@@ -1,0 +1,6 @@
+{
+  "name": "Tes Kecermatan Seleksi Unhan",
+  "description": "Aplikasi simulasi Tes Kecermatan untuk Seleksi Masuk Universitas Pertahanan (Unhan) lengkap dengan timer, statistik performa, dan pengacak simbol.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
