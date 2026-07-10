@@ -298,10 +298,30 @@ export default function App() {
     ];
   });
 
-  // Sync participant codes to localStorage
+  // Sync participant codes to localStorage & fetch from server when admin logged in
   useEffect(() => {
     localStorage.setItem('unhan_participant_codes', JSON.stringify(participantCodes));
   }, [participantCodes]);
+
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      fetch('/api/codes', {
+        headers: {
+          'x-admin-key': 'UNHAN2027'
+        }
+      })
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Gagal memuat kode dari server');
+      })
+      .then(data => {
+        setParticipantCodes(data);
+      })
+      .catch(err => {
+        console.error(err);
+      });
+    }
+  }, [isAdminLoggedIn]);
 
   // Admin form and table filter states
   const [newCustomCode, setNewCustomCode] = useState<string>('');
@@ -346,39 +366,47 @@ export default function App() {
   const handleVerifyAccessCode = (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = accessCode.trim().toUpperCase();
-    
-    // 1. Admin bypass code
-    if (normalized === 'UNHAN2027') {
-      localStorage.setItem('unhan_access_authorized', 'true');
-      localStorage.setItem('unhan_admin_authorized', 'true');
-      setIsAuthorized(true);
-      setIsAdminLoggedIn(true);
-      setScreen('admin');
-      setAccessError(null);
-      playSound('victory', soundEnabled);
+    if (!normalized) {
+      setAccessError('Kode akses tidak boleh kosong.');
       return;
     }
 
-    // 2. Dynamic participant codes check
-    const foundIdx = participantCodes.findIndex(c => c.code.trim().toUpperCase() === normalized);
-    if (foundIdx !== -1) {
-      const updated = [...participantCodes];
-      // Mark code as used if not already
-      if (!updated[foundIdx].isUsed) {
-        updated[foundIdx].isUsed = true;
-        updated[foundIdx].usedAt = new Date().toISOString();
-        setParticipantCodes(updated);
+    fetch('/api/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code: normalized })
+    })
+    .then(res => {
+      if (res.ok) return res.json();
+      return res.json().then(data => { throw new Error(data.message || 'Verifikasi gagal'); });
+    })
+    .then(data => {
+      if (data.success) {
+        localStorage.setItem('unhan_access_authorized', 'true');
+        setIsAuthorized(true);
+        if (data.isAdmin) {
+          localStorage.setItem('unhan_admin_authorized', 'true');
+          setIsAdminLoggedIn(true);
+          setScreen('admin');
+        } else {
+          localStorage.removeItem('unhan_admin_authorized');
+          setIsAdminLoggedIn(false);
+          setScreen('welcome');
+        }
+        setAccessError(null);
+        playSound('victory', soundEnabled);
+      } else {
+        setAccessError(data.message || 'Kode akses tidak valid atau belum terdaftar.');
+        playSound('buzz', soundEnabled);
       }
-      localStorage.setItem('unhan_access_authorized', 'true');
-      setIsAuthorized(true);
-      setIsAdminLoggedIn(false); // standard participant
-      setAccessError(null);
-      playSound('victory', soundEnabled);
-      return;
-    }
-
-    setAccessError('Kode akses tidak valid atau belum terdaftar.');
-    playSound('buzz', soundEnabled);
+    })
+    .catch(err => {
+      console.error(err);
+      setAccessError(err.message || 'Gagal terhubung ke server verifikasi.');
+      playSound('buzz', soundEnabled);
+    });
   };
 
   const handleLogoutAccess = () => {
@@ -429,10 +457,28 @@ export default function App() {
       notes: newCodeNotes.trim() || 'Dibuat Manual'
     };
 
-    setParticipantCodes(prev => [newCodeItem, ...prev]);
-    setNewCustomCode('');
-    setNewCodeNotes('');
-    playSound('victory', soundEnabled);
+    fetch('/api/codes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': 'UNHAN2027'
+      },
+      body: JSON.stringify({ codes: [newCodeItem] })
+    })
+    .then(res => {
+      if (res.ok) return res.json();
+      throw new Error('Gagal menyimpan kode ke server');
+    })
+    .then(data => {
+      setParticipantCodes(data);
+      setNewCustomCode('');
+      setNewCodeNotes('');
+      playSound('victory', soundEnabled);
+    })
+    .catch(err => {
+      console.error(err);
+      triggerAlert('Gagal', 'Gagal memposting kode ke server backend.');
+    });
   };
 
   const handleGenerateBulk = (count: number) => {
@@ -465,8 +511,26 @@ export default function App() {
       });
     }
 
-    setParticipantCodes(prev => [...newItems, ...prev]);
-    playSound('victory', soundEnabled);
+    fetch('/api/codes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': 'UNHAN2027'
+      },
+      body: JSON.stringify({ codes: newItems })
+    })
+    .then(res => {
+      if (res.ok) return res.json();
+      throw new Error('Gagal menyimpan kode bulk ke server');
+    })
+    .then(data => {
+      setParticipantCodes(data);
+      playSound('victory', soundEnabled);
+    })
+    .catch(err => {
+      console.error(err);
+      triggerAlert('Gagal', 'Gagal menyimpan kode bulk ke server.');
+    });
   };
 
   const handleDeleteCode = (codeToDelete: string) => {
@@ -474,8 +538,24 @@ export default function App() {
       'Hapus Kode Akses',
       `Apakah Anda yakin ingin menghapus kode akses "${codeToDelete}"? Peserta dengan kode ini tidak akan bisa masuk lagi ke dalam sistem.`,
       () => {
-        setParticipantCodes(prev => prev.filter(c => c.code !== codeToDelete));
-        playSound('click', soundEnabled);
+        fetch(`/api/codes/${encodeURIComponent(codeToDelete)}`, {
+          method: 'DELETE',
+          headers: {
+            'x-admin-key': 'UNHAN2027'
+          }
+        })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Gagal menghapus kode di server');
+        })
+        .then(data => {
+          setParticipantCodes(data);
+          playSound('click', soundEnabled);
+        })
+        .catch(err => {
+          console.error(err);
+          triggerAlert('Gagal', 'Gagal menghapus kode akses di server.');
+        });
       }
     );
   };
@@ -485,8 +565,24 @@ export default function App() {
       'Hapus Semua Kode',
       'Apakah Anda yakin ingin menghapus SEMUA kode akses peserta? Tindakan ini tidak bisa dibatalkan.',
       () => {
-        setParticipantCodes([]);
-        playSound('click', soundEnabled);
+        fetch('/api/codes', {
+          method: 'DELETE',
+          headers: {
+            'x-admin-key': 'UNHAN2027'
+          }
+        })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Gagal mengosongkan kode di server');
+        })
+        .then(data => {
+          setParticipantCodes([]);
+          playSound('click', soundEnabled);
+        })
+        .catch(err => {
+          console.error(err);
+          triggerAlert('Gagal', 'Gagal mengosongkan kode di server.');
+        });
       }
     );
   };
@@ -1166,13 +1262,13 @@ export default function App() {
           ? 'bg-zinc-900/95 border-zinc-800 text-white' 
           : 'bg-white/95 border-slate-200/80 shadow-sm text-slate-800'
       }`}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
             <div className="flex-shrink-0 bg-white p-1 sm:p-1.5 rounded-xl border border-slate-200/60 shadow-xs">
               <BimbelUnhanLogo className="w-6 h-6 sm:w-7 sm:h-7" showText={false} textClassName="text-[#0c2640]" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <span className="text-[8px] sm:text-[10px] font-extrabold bg-[#0f2942] text-white px-1.5 py-0.5 rounded uppercase tracking-wider truncate">
                   BIMBEL MASUK UNHAN
                 </span>
@@ -1186,7 +1282,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0 flex-wrap justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-center sm:justify-end w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100/50">
             <button
               id="sound-toggle-btn"
               onClick={() => {
