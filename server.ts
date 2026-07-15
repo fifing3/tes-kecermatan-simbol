@@ -9,6 +9,7 @@ interface ParticipantCode {
   isUsed: boolean;
   usedAt?: string;
   notes: string;
+  deviceId?: string;
 }
 
 const CODES_FILE = path.join(process.cwd(), 'codes.json');
@@ -95,11 +96,11 @@ async function startServer() {
 
   // Verify access code (Public)
   app.post('/api/verify', (req, res) => {
-    const { code } = req.body;
+    const { code, deviceId } = req.body;
+    
     if (!code) {
       return res.status(400).json({ success: false, message: 'Kode akses tidak boleh kosong.' });
     }
-
     const normalized = code.trim().toUpperCase();
 
     // 1. Admin bypass code
@@ -112,10 +113,14 @@ async function startServer() {
     const foundIdx = codes.findIndex(c => c.code.trim().toUpperCase() === normalized);
     
     if (foundIdx !== -1) {
-      // Mark code as used if not already
-      if (!codes[foundIdx].isUsed) {
+      if (codes[foundIdx].isUsed) {
+        if (codes[foundIdx].deviceId && codes[foundIdx].deviceId !== deviceId) {
+          return res.status(403).json({ success: false, message: 'Kode akses ini sudah digunakan di perangkat lain.' });
+        }
+      } else {
         codes[foundIdx].isUsed = true;
         codes[foundIdx].usedAt = new Date().toISOString();
+        codes[foundIdx].deviceId = deviceId || 'unknown-device';
         writeCodes(codes);
       }
       return res.json({ success: true, isAdmin: false });

@@ -92,7 +92,7 @@ export function BimbelUnhanLogo({ className = "w-12 h-12", textClassName = "text
   const isStacked = layout === 'stacked';
   return (
     <div className={isStacked ? "flex flex-col items-center gap-3 text-center" : "flex items-center gap-2.5"}>
-      <img src="/logo.png" alt="Logo" className={className} />
+      <img src="/logo.png" alt="Logo" className={`${className} object-contain`} />
       {showText && (
         isStacked ? (
           <div className={`flex flex-col items-center text-center font-sans tracking-tight ${textClassName}`}>
@@ -319,13 +319,20 @@ export default function App() {
       setAccessError('Kode akses tidak boleh kosong.');
       return;
     }
+    
+    // Get or generate deviceId
+    let deviceId = localStorage.getItem('unhan_device_id');
+    if (!deviceId) {
+      deviceId = 'device-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('unhan_device_id', deviceId);
+    }
 
     fetch('/api/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ code: normalized })
+      body: JSON.stringify({ code: normalized, deviceId })
     })
     .then(res => {
       if (res.ok) return res.json();
@@ -333,6 +340,7 @@ export default function App() {
     })
     .then(data => {
       if (data.success) {
+        setCustomAlert(null); // Clear any popup message on successful login
         localStorage.setItem('unhan_access_authorized', 'true');
         setIsAuthorized(true);
         if (data.isAdmin) {
@@ -1093,7 +1101,7 @@ export default function App() {
 
         {/* Main interactive form */}
         <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
-          <div className={`max-w-md w-full rounded-2xl shadow-xl border p-6 sm:p-8 space-y-6 transition-all transform hover:scale-[1.01] ${
+          <div className={`max-w-md w-full rounded-2xl shadow-xl border p-5 sm:p-8 space-y-6 transition-all transform hover:scale-[1.01] ${
             highContrast ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-100 text-[#0f2942]'
           }`}>
             <div className="text-center space-y-3">
@@ -1104,10 +1112,10 @@ export default function App() {
               </div>
               <div className="space-y-1">
                 <h2 className="text-xl sm:text-2xl font-black text-[#0c2640] tracking-tight">
-                  Akses Terkunci
+                  Tes Kecermatan Psikologi Unhan
                 </h2>
-                <p className="text-xs text-slate-500 font-light max-w-xs mx-auto leading-relaxed">
-                  Silakan masukkan Kode Akses Mitra untuk menggunakan simulator aplikasi latihan kecermatan.
+                <p className="text-xs text-slate-500 font-light max-w-[180px] sm:max-w-xs mx-auto leading-relaxed">
+                  Simulasi latihan tes kecermatan Pemeriksaan Psikologi (RIKPSI) Unhan 2027
                 </p>
               </div>
             </div>
@@ -1310,10 +1318,10 @@ export default function App() {
             ADMIN SCREEN: ACCESSIBLE CODE GENERATOR
             ========================================== */}
         {screen === 'admin' && (
-          <div className="space-y-8 animate-fadeIn">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-fadeIn">
             
             {/* Header Section */}
-            <div className={`p-6 rounded-2xl border transition-all duration-300 ${
+            <div className={`p-4 sm:p-6 rounded-2xl border transition-all duration-300 ${
               highContrast ? 'bg-zinc-900 border-white text-white' : 'bg-white border-slate-200/80 shadow-xs'
             }`}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1362,7 +1370,7 @@ export default function App() {
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <div className={`p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300 ${
                 highContrast ? 'bg-zinc-900 border-white text-white' : 'bg-white border-slate-200 shadow-2xs'
               }`}>
@@ -1405,13 +1413,13 @@ export default function App() {
             </div>
 
             {/* Creators and Bulkers layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
               
               {/* Creator Form */}
-              <div className={`lg:col-span-5 p-6 rounded-2xl border transition-all duration-300 ${
+              <div className={`lg:col-span-5 p-4 sm:p-6 rounded-2xl border transition-all duration-300 ${
                 highContrast ? 'bg-zinc-900 border-white text-white' : 'bg-white border-slate-200/80 shadow-2xs'
               }`}>
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-4 sm:mb-6">
                   <Plus className="w-5 h-5 text-amber-500" />
                   <h3 className="font-extrabold text-base text-[#0f2942]">Buat Kode Tunggal</h3>
                 </div>
@@ -1465,7 +1473,7 @@ export default function App() {
                   </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-100">
+                <div className="mt-4 sm:mt-8 pt-6 border-t border-slate-100">
                   <h4 className="font-extrabold text-xs text-slate-400 uppercase tracking-widest mb-3 block">
                     ⚡ Pembuat Kode Massal (Bulk)
                   </h4>
@@ -1569,7 +1577,7 @@ export default function App() {
                               </button>
                             </div>
 
-                            <p className="text-xs text-slate-500 truncate max-w-xs font-semibold">
+                            <p className="text-xs text-slate-500 truncate max-w-[180px] sm:max-w-xs font-semibold">
                               🏷️ {item.notes}
                             </p>
 
@@ -1621,7 +1629,7 @@ export default function App() {
             1. WELCOME SCREEN / STATISTICS DASHBOARD
             ========================================== */}
         {screen === 'welcome' && (
-          <div className="space-y-8 animate-fadeIn">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-fadeIn">
             {/* Admin Alert Banner */}
             {isAdminLoggedIn && (
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs animate-pulse">
@@ -1650,13 +1658,13 @@ export default function App() {
             )}
 
             {/* Config & Progress Panels */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8">
               
               {/* Left Config Panel */}
-              <div className={`lg:col-span-5 p-6 rounded-2xl border transition-all duration-300 ${
+              <div className={`lg:col-span-5 p-4 sm:p-6 rounded-2xl border transition-all duration-300 ${
                 highContrast ? 'bg-zinc-900 border-white text-white' : 'bg-white border-slate-200/80 shadow-sm'
               }`}>
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600">
                     <Settings className="w-5 h-5" />
                   </div>
@@ -1752,11 +1760,11 @@ export default function App() {
               </div>
 
               {/* Right Stats Dashboard Panel */}
-              <div className={`lg:col-span-7 p-6 rounded-2xl border transition-all duration-300 flex flex-col justify-between ${
+              <div className={`lg:col-span-7 p-4 sm:p-6 rounded-2xl border transition-all duration-300 flex flex-col justify-between ${
                 highContrast ? 'bg-zinc-900 border-white text-white' : 'bg-white border-slate-200/80 shadow-sm'
               }`}>
                 <div>
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
                     <div className="flex items-center gap-3">
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
                         <TrendingUp className="w-5 h-5" />
@@ -1778,7 +1786,7 @@ export default function App() {
                   </div>
 
                   {historyList.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center space-y-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                       <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                         <BarChart3 className="w-6 h-6 text-slate-400" />
                       </div>
@@ -2087,7 +2095,7 @@ export default function App() {
                         questionEndTimeRef.current = Date.now() + questionTimerLimit * 1000;
                         playSound('click', soundEnabled);
                       }}
-                      className={`w-9 h-9 rounded-xl font-bold font-mono text-xs flex items-center justify-center transition-all ${
+                      className={`w-10 h-10 rounded-xl font-bold font-mono text-xs flex items-center justify-center transition-all ${
                         isCurrent
                           ? 'bg-amber-500 text-slate-950 font-extrabold ring-4 ring-amber-500/20'
                           : isAnswered
@@ -2141,7 +2149,7 @@ export default function App() {
             3. SCREEN 3: TEST RESULTS / REVIEW PANEL
             ========================================== */}
         {screen === 'results' && (
-          <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
+          <div className="space-y-4 sm:space-y-6 md:space-y-8 animate-fadeIn max-w-5xl mx-auto">
             
             {/* Main Result Card */}
             <div className={`p-8 rounded-2xl border text-center transition-all duration-300 ${
@@ -2451,7 +2459,7 @@ export default function App() {
 
             {/* List Records */}
             {filteredLogs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 bg-white border border-slate-100 rounded-2xl shadow-xs">
+              <div className="flex flex-col items-center justify-center py-6 sm:py-10 sm:py-20 text-center space-y-4 bg-white border border-slate-100 rounded-2xl shadow-xs">
                 <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
                   <AlertTriangle className="w-6 h-6 text-slate-400" />
                 </div>
@@ -2537,7 +2545,7 @@ export default function App() {
       {showHelp && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
           
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl p-6 sm:p-8 space-y-6 border border-slate-100">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl p-5 sm:p-8 space-y-6 border border-slate-100">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-2.5">
@@ -2613,7 +2621,7 @@ export default function App() {
           ========================================== */}
       {showPreTestInstructions && (
         <div className="fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 space-y-6 border border-slate-100">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-5 sm:p-8 space-y-6 border border-slate-100">
             
             {/* Header branding */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-5">
@@ -2711,7 +2719,7 @@ export default function App() {
           ========================================== */}
       {showCancelConfirm && (
         <div className="fixed inset-0 z-[110] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100 text-center space-y-5">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 sm:p-6 border border-slate-100 text-center space-y-5">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
               <AlertTriangle className="w-7 h-7" />
             </div>
@@ -2744,7 +2752,7 @@ export default function App() {
           ========================================== */}
       {confirmDeleteAll && (
         <div className="fixed inset-0 z-[110] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100 text-center space-y-5">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 sm:p-6 border border-slate-100 text-center space-y-5">
             <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-600">
               <Trash2 className="w-7 h-7" />
             </div>
@@ -2777,7 +2785,7 @@ export default function App() {
           ========================================== */}
       {deleteItemId && (
         <div className="fixed inset-0 z-[110] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100 text-center space-y-5">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 sm:p-6 border border-slate-100 text-center space-y-5">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
               <Trash2 className="w-7 h-7" />
             </div>
@@ -2810,7 +2818,7 @@ export default function App() {
           ========================================== */}
       {customConfirm && customConfirm.isOpen && (
         <div className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100 text-center space-y-5">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 sm:p-6 border border-slate-100 text-center space-y-5">
             <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-600">
               <Trash2 className="w-7 h-7" />
             </div>
@@ -2843,7 +2851,7 @@ export default function App() {
           ========================================== */}
       {customAlert && customAlert.isOpen && (
         <div className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6 border border-slate-100 text-center space-y-5">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-4 sm:p-6 border border-slate-100 text-center space-y-5">
             <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
               <AlertTriangle className="w-7 h-7" />
             </div>
@@ -2868,7 +2876,7 @@ export default function App() {
       {/* ==========================================
           FOOTER COPYRIGHT
           ========================================== */}
-      <footer className="max-w-7xl mx-auto px-4 py-10 mt-12 border-t border-slate-200/60 text-center">
+      <footer className="max-w-7xl mx-auto px-4 py-6 sm:py-10 mt-6 sm:mt-12 border-t border-slate-200/60 text-center">
         <p className="text-xs text-slate-400 font-light">
           Simulasi Tes Kecermatan Seleksi Masuk Unhan v2.0 • Dioptimalkan untuk Kecepatan Refleks &amp; Konsentrasi Tinggi.
         </p>
