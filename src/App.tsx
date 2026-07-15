@@ -92,58 +92,7 @@ export function BimbelUnhanLogo({ className = "w-12 h-12", textClassName = "text
   const isStacked = layout === 'stacked';
   return (
     <div className={isStacked ? "flex flex-col items-center gap-3 text-center" : "flex items-center gap-2.5"}>
-      <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {/* Left Half: Geometric Brain Polygons */}
-        <g fill="currentColor" stroke="#fff" strokeWidth="0.5" strokeLinejoin="round" className={textClassName}>
-          {/* Column 3 (Inner) */}
-          <path d="M47,15 L38,21 L38,32 L47,26 Z" />
-          <path d="M47,28 L38,34 L38,45 L47,39 Z" />
-          <path d="M47,41 L38,47 L38,58 L47,52 Z" />
-          <path d="M47,54 L38,60 L38,71 L47,65 Z" />
-          <path d="M47,67 L38,73 L38,84 L47,78 Z" />
-          
-          {/* Column 2 (Middle) */}
-          <path d="M36,22 L27,28 L27,39 L36,33 Z" />
-          <path d="M36,35 L27,41 L27,52 L36,46 Z" />
-          <path d="M36,48 L27,54 L27,65 L36,59 Z" />
-          <path d="M36,61 L27,67 L27,78 L36,72 Z" />
-
-          {/* Column 1 (Outer) */}
-          <path d="M25,29 L16,35 L16,46 L25,40 Z" />
-          <path d="M25,42 L16,48 L16,59 L25,53 Z" />
-          <path d="M25,55 L16,61 L16,72 L25,66 Z" />
-        </g>
-
-        {/* Right Half: Circuit Connection Lines */}
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={textClassName}>
-          {/* Stem */}
-          <line x1="51" y1="15" x2="51" y2="85" />
-
-          {/* Path 1 */}
-          <path d="M51,18 L60,25 L72,25" />
-          <circle cx="72" cy="25" r="3.5" fill="currentColor" stroke="none" />
-
-          {/* Path 2 */}
-          <path d="M51,32 L65,32 L75,42 L85,42" />
-          <circle cx="85" cy="42" r="3.5" fill="currentColor" stroke="none" />
-
-          {/* Path 3 */}
-          <path d="M51,48 L75,48" />
-          <circle cx="75" cy="48" r="3.5" fill="currentColor" stroke="none" />
-
-          {/* Path 4 */}
-          <path d="M51,62 L58,55 L75,55 L83,63" />
-          <circle cx="83" cy="63" r="3.5" fill="currentColor" stroke="none" />
-
-          {/* Path 5 */}
-          <path d="M51,74 L62,74 L69,81" />
-          <circle cx="69" cy="81" r="3.5" fill="currentColor" stroke="none" />
-
-          {/* Path 6 */}
-          <path d="M51,82 L60,89" />
-          <circle cx="60" cy="89" r="3.5" fill="currentColor" stroke="none" />
-        </g>
-      </svg>
+      <img src="/logo.png" alt="Logo" className={className} />
       {showText && (
         isStacked ? (
           <div className={`flex flex-col items-center text-center font-sans tracking-tight ${textClassName}`}>
@@ -1277,7 +1226,7 @@ export default function App() {
                 </span>
               </div>
               <h1 className="text-[12px] sm:text-sm md:text-lg font-extrabold tracking-tight leading-tight text-[#0f2942] truncate">
-                Tes Kecermatan Masuk Unhan
+                TES KECERMATAN PSIKOLOGI UNHAN
               </h1>
             </div>
           </div>
