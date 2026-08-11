@@ -1979,10 +1979,10 @@ export default function App() {
                         id={`sandi-card-${symbol}`}
                         className="bg-[#eef4fc] border border-[#d1e3f8]/50 rounded-lg py-1 sm:py-2 px-1 sm:px-2 flex flex-col items-center justify-center text-center transform hover:scale-[1.03] transition-all"
                       >
-                        <span className="text-[#0c2640] text-sm sm:text-lg font-black font-sans">
+                        <span className="text-[#0c2640] text-xl sm:text-2xl font-black font-sans">
                           {symbol}
                         </span>
-                        <span className="text-[#4b6b88] text-[9px] sm:text-xs font-mono font-extrabold mt-0.5 sm:mt-1">
+                        <span className="text-[#4b6b88] text-sm sm:text-base font-mono font-extrabold mt-0.5 sm:mt-1">
                           = {mapValue}
                         </span>
                       </div>
