@@ -79,6 +79,7 @@ interface ParticipantCode {
   usedAt?: string;
   isUsed: boolean;
   notes?: string;
+  expiresAt?: string;
 }
 
 interface BimbelUnhanLogoProps {
@@ -309,6 +310,7 @@ export default function App() {
   // Admin form and table filter states
   const [newCustomCode, setNewCustomCode] = useState<string>('');
   const [newCodeNotes, setNewCodeNotes] = useState<string>('');
+  const [expirationPeriod, setExpirationPeriod] = useState<number>(0);
   const [adminCodeFilter, setAdminCodeFilter] = useState<'all' | 'active' | 'used'>('all');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -441,11 +443,19 @@ export default function App() {
       return;
     }
 
+    let expiresAt: string | undefined = undefined;
+    if (expirationPeriod > 0) {
+      const expDate = new Date();
+      expDate.setHours(expDate.getHours() + expirationPeriod);
+      expiresAt = expDate.toISOString();
+    }
+
     const newCodeItem: ParticipantCode = {
       code: formattedCode,
       createdAt: new Date().toISOString(),
       isUsed: false,
-      notes: newCodeNotes.trim() || 'Dibuat Manual'
+      notes: newCodeNotes.trim() || 'Dibuat Manual',
+      ...(expiresAt && { expiresAt })
     };
 
     fetch('/api/codes', {
@@ -477,6 +487,13 @@ export default function App() {
     const newItems: ParticipantCode[] = [];
     const timestamp = new Date().toISOString();
 
+    let expiresAt: string | undefined = undefined;
+    if (expirationPeriod > 0) {
+      const expDate = new Date();
+      expDate.setHours(expDate.getHours() + expirationPeriod);
+      expiresAt = expDate.toISOString();
+    }
+
     for (let i = 0; i < count; i++) {
       // Ensure uniqueness
       let rand = '';
@@ -498,7 +515,8 @@ export default function App() {
         code: rand,
         createdAt: timestamp,
         isUsed: false,
-        notes: `Bulk Gen #${i + 1} (${new Date().toLocaleDateString('id-ID')})`
+        notes: `Bulk Gen #${i + 1} (${new Date().toLocaleDateString('id-ID')})`,
+        ...(expiresAt && { expiresAt })
       });
     }
 
@@ -1498,6 +1516,24 @@ export default function App() {
                     />
                   </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                      Masa Aktif Kode
+                    </label>
+                    <select
+                      value={expirationPeriod}
+                      onChange={(e) => setExpirationPeriod(Number(e.target.value))}
+                      className="w-full bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#0c2640]/10 focus:border-[#0c2640] transition-all"
+                    >
+                      <option value={0}>Tidak Ada Batasan Waktu</option>
+                      <option value={1}>1 Jam</option>
+                      <option value={6}>6 Jam</option>
+                      <option value={12}>12 Jam</option>
+                      <option value={24}>1 Hari (24 Jam)</option>
+                      <option value={168}>7 Hari</option>
+                    </select>
+                  </div>
+
                   <button
                     type="submit"
                     className="w-full py-3 rounded-xl bg-[#0c2640] hover:bg-[#143d66] text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -1618,6 +1654,12 @@ export default function App() {
                             <p className="text-[10px] text-slate-400 font-medium">
                               Dibuat: {new Date(item.createdAt).toLocaleDateString('id-ID')} - {new Date(item.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
                             </p>
+                            {item.expiresAt && (
+                              <p className={`text-[10px] font-bold ${new Date() > new Date(item.expiresAt) ? 'text-red-500' : 'text-amber-600'}`}>
+                                Expired: {new Date(item.expiresAt).toLocaleDateString('id-ID')} - {new Date(item.expiresAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                                {new Date() > new Date(item.expiresAt) && ' (Kedaluwarsa)'}
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 pt-2.5 sm:pt-0 border-t border-slate-100 sm:border-0">
